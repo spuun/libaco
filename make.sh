@@ -76,10 +76,10 @@ function build_f(){
     echo "EXTRA_CFLAGS:     $EXTRA_CFLAGS"
     echo "ACO_EXTRA_CFLAGS: $ACO_EXTRA_CFLAGS"
     echo "OUTPUT_SUFFIX:    $OUTPUT_SUFFIX"
-    echo "$app_list" | grep -Po '.+$' | while read read_in
+    echo "$app_list" | while read -r read_in
     do
-        file=`echo $read_in | grep -Po "^[^\s]+"`
-        cflags=`echo $read_in | sed -r 's/^\s*([^ ]+)(.*)$/\2/'`
+        file=`echo $read_in | cut -d' ' -f 1`
+        cflags=`echo $read_in | cut -s -d' ' -f 2-`
         if [ -z "$file" ] 
         then
             continue  
@@ -89,7 +89,7 @@ function build_f(){
         skip_flag=""
         if [ "$gl_opt_no_m32" ]
         then
-            echo "$OUTPUT_SUFFIX" | grep -P "\bm32\b" &>/dev/null
+            echo "$OUTPUT_SUFFIX" | grep "\bm32\b" &>/dev/null
             tmp_ret=$?
             if [ "$tmp_ret" -eq "0" ]
             then
@@ -104,7 +104,7 @@ function build_f(){
         fi
         if [ "$gl_opt_no_valgrind" ]
         then
-            echo "$OUTPUT_SUFFIX" | grep -P "\bvalgrind\b" &>/dev/null
+            echo "$OUTPUT_SUFFIX" | grep "\bvalgrind\b" &>/dev/null
             tmp_ret=$?
             if [ "$tmp_ret" -eq "0" ]
             then
