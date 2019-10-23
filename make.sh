@@ -34,8 +34,8 @@ test_aco_synopsis
 test_aco_benchmark
 '''
 
-gl_opt_no_m32=""
-gl_opt_no_valgrind=""
+gl_opt_no_m32="false"
+gl_opt_no_valgrind="false"
 
 OUTPUT_DIR="$OUTPUT_DIR""//file"
 OUTPUT_DIR=`dirname "$OUTPUT_DIR"`
@@ -86,46 +86,10 @@ function build_f(){
         fi
         #echo "<$file>:<$cflags>:$OUTPUT_DIR:$CFLAGS:$EXTRA_CFLAGS:$OUTPUT_SUFFIX"
         build_cmd="$makecc $CFLAGS $ACO_EXTRA_CFLAGS $EXTRA_CFLAGS acosw.S aco.c $file.c $cflags -o $OUTPUT_DIR/$file$OUTPUT_SUFFIX"
-        skip_flag=""
-        if [ "$gl_opt_no_m32" ]
-        then
-            echo "$OUTPUT_SUFFIX" | grep "\bm32\b" &>/dev/null
-            tmp_ret=$?
-            if [ "$tmp_ret" -eq "0" ]
-            then
-                skip_flag="true"
-            elif [ "$tmp_ret" -eq "1" ]
-            then
-                :
-            else
-                error "grep failed: $tmp_ret"
-                exit $tmp_ret
-            fi
-        fi
-        if [ "$gl_opt_no_valgrind" ]
-        then
-            echo "$OUTPUT_SUFFIX" | grep "\bvalgrind\b" &>/dev/null
-            tmp_ret=$?
-            if [ "$tmp_ret" -eq "0" ]
-            then
-                skip_flag="true"
-            elif [ "$tmp_ret" -eq "1" ]
-            then
-                :
-            else
-                error "grep failed: $tmp_ret"
-                exit $tmp_ret
-            fi
-        fi
-        if [ "$skip_flag" ]
-        then
-            echo "skip    $build_cmd"
-        else
-            echo "        $build_cmd"
-            $build_cmd
-            assert "build fail"
-        fi
-    done
+        echo "        $build_cmd"
+        $build_cmd
+        assert "build fail"
+      done
     assert "exit"
 }
 
@@ -199,16 +163,26 @@ tra "echo;echo build has been interrupted"
 # 0 0 0
 ACO_EXTRA_CFLAGS="" OUTPUT_SUFFIX="..no_valgrind.standaloneFPUenv" build_f
 # 0 0 1
-ACO_EXTRA_CFLAGS="-DACO_USE_VALGRIND" OUTPUT_SUFFIX="..valgrind.standaloneFPUenv" build_f
+if [ "$gl_opt_no_valgrind" = "false" ]; then
+  ACO_EXTRA_CFLAGS="-DACO_USE_VALGRIND" OUTPUT_SUFFIX="..valgrind.standaloneFPUenv" build_f
+fi
 # 0 1 0
 ACO_EXTRA_CFLAGS="-DACO_CONFIG_SHARE_FPU_MXCSR_ENV" OUTPUT_SUFFIX="..no_valgrind.shareFPUenv" build_f
 # 0 1 1
-ACO_EXTRA_CFLAGS="-DACO_CONFIG_SHARE_FPU_MXCSR_ENV -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..valgrind.shareFPUenv" build_f
+if [ "$gl_opt_no_valgrind" = "false" ]; then
+  ACO_EXTRA_CFLAGS="-DACO_CONFIG_SHARE_FPU_MXCSR_ENV -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..valgrind.shareFPUenv" build_f
+  fi
 # 1 0 0
-ACO_EXTRA_CFLAGS="-m32" OUTPUT_SUFFIX="..m32.no_valgrind.standaloneFPUenv" build_f
-# 1 0 1
-ACO_EXTRA_CFLAGS="-m32 -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..m32.valgrind.standaloneFPUenv" build_f
-# 1 1 0
-ACO_EXTRA_CFLAGS="-m32 -DACO_CONFIG_SHARE_FPU_MXCSR_ENV" OUTPUT_SUFFIX="..m32.no_valgrind.shareFPUenv" build_f
-# 1 1 1
-ACO_EXTRA_CFLAGS="-m32 -DACO_CONFIG_SHARE_FPU_MXCSR_ENV -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..m32.valgrind.shareFPUenv" build_f
+if [ "$gl_opt_no_m32" = "false" ]; then
+  ACO_EXTRA_CFLAGS="-m32" OUTPUT_SUFFIX="..m32.no_valgrind.standaloneFPUenv" build_f
+  # 1 0 1
+  if [ "$gl_opt_no_valgrind" = "false" ]; then
+    ACO_EXTRA_CFLAGS="-m32 -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..m32.valgrind.standaloneFPUenv" build_f
+  fi
+  # 1 1 0
+  ACO_EXTRA_CFLAGS="-m32 -DACO_CONFIG_SHARE_FPU_MXCSR_ENV" OUTPUT_SUFFIX="..m32.no_valgrind.shareFPUenv" build_f
+  # 1 1 1
+  if [ "$gl_opt_no_valgrind" = "false" ]; then
+    ACO_EXTRA_CFLAGS="-m32 -DACO_CONFIG_SHARE_FPU_MXCSR_ENV -DACO_USE_VALGRIND" OUTPUT_SUFFIX="..m32.valgrind.shareFPUenv" build_f
+  fi
+fi
